@@ -95,3 +95,110 @@ Dognition Company Database
 	GROUP BY DistictUUsersID.user_guid
 	HAVING numrows>10
 	ORDER BY numrows DESC;
+
+
+# Useful Logical Operators
+
+# IF statement
+#Question 1: combine a subquery with an IF statement to retrieve a list of unique user_guids with their classification as either an early or late user (based on when their first user entry was created)
+
+	SELECT IF(cleaned_users.first_account<'2014-06-01','early_user','late_user') AS user_type,
+	       COUNT(cleaned_users.first_account)
+	FROM (SELECT user_guid, MIN(created_at) AS first_account 
+	      FROM users
+	      GROUP BY user_guid) AS cleaned_users
+	GROUP BY user_type
+
+#Question 2: Use an IF expression and the query you wrote in Question 1 as a subquery to determine the number of unique user_guids who reside in the United States (abbreviated "US") and outside of the US.
+
+
+	SELECT IF(cleaned_users.country='US','In US','Outside US') AS user_location, count(cleaned_users.user_guid) AS num_guids
+	FROM (SELECT DISTINCT user_guid, country
+	    FROM users
+	    WHERE user_guid IS NOT NULL AND country IS NOT NULL) AS cleaned_users
+	GROUP BY user_location;
+
+#(cont.)nested IF expression
+
+	SELECT IF(cleaned_users.country='US','In US', 
+		  IF(cleaned_users.country='N/A','Not Applicable','Outside US')) AS US_user, 
+	      count(cleaned_users.user_guid)   
+	FROM (SELECT DISTINCT user_guid, country 
+	      FROM users
+	      WHERE country IS NOT NULL) AS cleaned_users
+	GROUP BY US_user
+	
+# CASE expressions
+#same result as last question:
+
+	SELECT CASE WHEN cleaned_users.country="US" THEN "In US"
+		    WHEN cleaned_users.country="N/A" THEN "Not Applicable"
+		    ELSE "Outside US"
+		    END AS US_user, 
+	      count(cleaned_users.user_guid)   
+	FROM (SELECT DISTINCT user_guid, country 
+	      FROM users
+	      WHERE country IS NOT NULL) AS cleaned_users
+	GROUP BY US_user
+	
+#(same result, more concise)
+
+	SELECT CASE cleaned_users.country
+		    WHEN "US" THEN "In US"
+		    WHEN "N/A" THEN "Not Applicable"
+		    ELSE "Outside US"
+		    END AS US_user, 
+	      count(cleaned_users.user_guid)   
+	FROM (SELECT DISTINCT user_guid, country 
+	      FROM users
+	      WHERE country IS NOT NULL) AS cleaned_users
+	GROUP BY US_user
+	
+#Question 1: Write a query using a CASE statement that outputs 3 columns: dog_guid, dog_fixed, and a third column that reads "neutered" every time there is a 1 in the "dog_fixed" column of dogs, "not neutered" every time there is a value of 0 in the "dog_fixed" column of dogs, and "NULL" every time there is a value of anything else in the "dog_fixed" column. 
+
+
+	SELECT dog_guid, dog_fixed,
+		CASE dog_fixed
+			WHEN "1" THEN "neutered"
+			WHEN "0" THEN "not neutered"
+			END AS neutered
+	FROM dogs
+	LIMIT 200;
+
+#Question 2: We learned that NULL values should be treated the same as "0" values in the exclude columns of the dogs and users tables. Write a query using a CASE statement that outputs 3 columns: dog_guid, exclude, and a third column that reads "exclude" every time there is a 1 in the "exclude" column of dogs and "keep" every time there is any other value in the exclude column. 
+
+
+	SELECT dog_guid, exclude,
+		CASE exclude
+			WHEN "1" THEN "exclude"
+			ELSE "keep"
+			END AS exclude_cleaned
+	FROM dogs
+	LIMIT 200;
+	
+#rewrite:
+
+	%%sql
+	SELECT dog_guid, exclude, IF(exclude="1","exclude","keep") AS exclude_cleaned
+	FROM dogs
+	LIMIT 200;
+	
+	
+#Question 6: Write a query that uses a CASE expression to output 3 columns: dog_guid, weight, and a third column that reads...
+"very small" when a dog's weight is 1-10 pounds
+"small" when a dog's weight is greater than 10 pounds to 30 pounds
+"medium" when a dog's weight is greater than 30 pounds to 50 pounds
+"large" when a dog's weight is greater than 50 pounds to 85 pounds
+"very large" when a dog's weight is greater than 85 pounds
+
+	
+	dog_guid, weight,
+		CASE
+		WHEN weight<=0 THEN "very small"
+		WHEN weight>10 AND weight<=30 THEN "small"
+		WHEN weight>30 AND weight<=50 THEN "medium"
+		WHEN weight>50 AND weight<=85 THEN "large"
+		WHEN weight>85 THEN "very large"
+		END AS weight_grouped
+	FROM dogs
+	LIMIT 200;
