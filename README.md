@@ -154,7 +154,7 @@ Dognition Company Database
 	      WHERE country IS NOT NULL) AS cleaned_users
 	GROUP BY US_user
 	
-#Question 1: Write a query using a CASE statement that outputs 3 columns: dog_guid, dog_fixed, and a third column that reads "neutered" every time there is a 1 in the "dog_fixed" column of dogs, "not neutered" every time there is a value of 0 in the "dog_fixed" column of dogs, and "NULL" every time there is a value of anything else in the "dog_fixed" column. 
+#Question 3: Write a query using a CASE statement that outputs 3 columns: dog_guid, dog_fixed, and a third column that reads "neutered" every time there is a 1 in the "dog_fixed" column of dogs, "not neutered" every time there is a value of 0 in the "dog_fixed" column of dogs, and "NULL" every time there is a value of anything else in the "dog_fixed" column. 
 
 
 	SELECT dog_guid, dog_fixed,
@@ -165,7 +165,7 @@ Dognition Company Database
 	FROM dogs
 	LIMIT 200;
 
-#Question 2: We learned that NULL values should be treated the same as "0" values in the exclude columns of the dogs and users tables. Write a query using a CASE statement that outputs 3 columns: dog_guid, exclude, and a third column that reads "exclude" every time there is a 1 in the "exclude" column of dogs and "keep" every time there is any other value in the exclude column. 
+#Question 4: We learned that NULL values should be treated the same as "0" values in the exclude columns of the dogs and users tables. Write a query using a CASE statement that outputs 3 columns: dog_guid, exclude, and a third column that reads "exclude" every time there is a 1 in the "exclude" column of dogs and "keep" every time there is any other value in the exclude column. 
 
 
 	SELECT dog_guid, exclude,
@@ -184,7 +184,7 @@ Dognition Company Database
 	LIMIT 200;
 	
 	
-#Question 6: Write a query that uses a CASE expression to output 3 columns: dog_guid, weight, and a third column that reads...
+#Question 5: Write a query that uses a CASE expression to output 3 columns: dog_guid, weight, and a third column that reads...
 "very small" when a dog's weight is 1-10 pounds
 "small" when a dog's weight is greater than 10 pounds to 30 pounds
 "medium" when a dog's weight is greater than 30 pounds to 50 pounds
@@ -202,3 +202,39 @@ Dognition Company Database
 		END AS weight_grouped
 	FROM dogs
 	LIMIT 200;
+
+
+#Question 6: For each dog_guid, output its dog_guid, breed_type, number of completed tests, and use an IF statement to include an extra column that reads "Pure_Breed" whenever breed_type equals 'Pure Breed" and "Not_Pure_Breed" whenever breed_type equals anything else. LIMIT your output to 50 rows for troubleshooting. 
+
+	SELECT d.dog_guid AS dogID, d.breed_type AS breed_type, count(c.created_at) AS numtests,
+		IF(d.breed_type='Pure Breed','pure_breed', 'not_pure_breed') AS pure_breed
+	FROM dogs d, complete_tests c
+	WHERE d.dog_guid=c.dog_guid
+	GROUP BY dogID, breed_type, pure_breed
+	LIMIT 50;
+	
+	
+#Question 7: Write a query that uses a CASE statement to report the number of unique user_guids associated with customers who live in the United States and who are in the following groups of states:
+
+Group 1: New York (abbreviated "NY") or New Jersey (abbreviated "NJ")
+Group 2: North Carolina (abbreviated "NC") or South Carolina (abbreviated "SC")
+Group 3: California (abbreviated "CA")
+Group 4: All other states with non-null values
+
+	SELECT COUNT(DISTINCT user_guid),
+		CASE
+		WHEN (state="NY" OR state="NJ") THEN "Group 1-NY/NJ"
+		WHEN (state="NC" OR state="SC") THEN "Group 2-NC/SC"
+		WHEN state="CA" THEN "Group 3-CA"
+		ELSE "Group 4-Other"
+		END AS state_group
+	FROM users
+	WHERE country="US" AND state IS NOT NULL
+	GROUP BY state_group;
+	
+	
+#Question 8: Write a query that allows you to determine how many unique dog_guids are associated with dogs who are DNA tested and have either stargazer or socialite personality dimensions. 
+
+	SELECT COUNT(DISTINCT dog_guid)
+	FROM dogs
+	WHERE dna_tested=1 AND (dimension='stargazer' OR dimension='socialite');
